@@ -12,13 +12,13 @@ from onnx_detextion import filter_models, get_files_in_folder, build_model, load
 from bot_thread import get_center, Bot
 from window_capture import WindowCapture
 from albion_capture import AlbionCapture
-from movement import moveTo
 import cv2
 import sys
 import os
 import keyboard
-from ui.switch import SwitchesFrame
-from ui.dropdown import DropdownFrame
+from ui.switch_frame import SwitchesFrame
+from ui.model_frame import ModelFrame
+from ui.other_frame import OtherFrame
 import time
 import threading
 from loguru import logger
@@ -53,12 +53,14 @@ class App(ctk.CTk):
         self.vision_status = "off"
         self.bot_status = "off"
         self.script_status = 'off'
+        self.bot_mode = 'default'
         self.start_X = 0
         self.start_Y = 0
         # 初始化WindowCapture
         self.wincap = WindowCapture(None)
         # 初始化AlbionCapture
         self.albion = AlbionCapture(self)
+        # 初始化Bot
         self.bot = Bot(self)
         # 取得視窗列表
         self.windows = self.wincap.list_window_names()
@@ -80,27 +82,7 @@ class App(ctk.CTk):
 
         # 關閉視窗事件
         self.protocol("WM_DELETE_WINDOW", self.on_close)
-        
-        def confidence_slider_event(value):
-            # 信心值拉條
-            self.confidence = round(value, 2)
-            logger.info(f"Set confidence to: {self.confidence}")
-            
-        def update_thread():
-            if not self.thread.is_alive():
-                self.thread = threading.Thread(target=self.update_screenshot)
-                self.thread.start()
-
-        def vision_switch_event():
-            switch = self.actions_frame.switches[0]
-            self.vision_status = switch.get()
-            logger.info(f"Switch Vision to: {self.vision_status}")
-            if self.vision_status == 'on':
-                self.is_running = True
-                update_thread()
-            else:
-                self.is_running = False
-                
+  
         def script_switch_event():
             switch = self.actions_frame.switches[2]
             self.script_status = switch.get()
@@ -121,93 +103,35 @@ class App(ctk.CTk):
                     self.script_status = 'off'
             else:
                 logger.info(f"Switch run script to: {self.script_status}")
-                    
-        def bot_switch_event():
-            switch = self.actions_frame.switches[1]
-            self.bot_status = switch.get()
-            logger.info(f"Switch Bot to: {self.bot_status}")
-            if self.bot_status == 'on':
-                self.is_running = True
-                update_thread()
-            else:
-                self.is_running = False
-                
+         
         def update_info():
-            '''
-            更新信息
-        
-            輸入: 無
-            輸出: 無
-            功能說明:
-                1. 關閉監看視窗
-                2. 重置 `actions_frame` 的值
-                3. 將機器人狀態和視覺狀態設置為 "off"
-                4. 獲取選擇的 ONNX 模型並載入類別列表
-                5. 建立模型並設置為網路模型
-                6. 打印正在使用的模型
-                7. 獲取遊戲名稱並初始化 `WindowCapture` 對象
-                8. 打印遊戲分辨率
-            '''
             # 將機器人狀態和視覺狀態設置為 "off"
             self.bot_status="off"
             self.vision_status="off"
-            self.script_status="off"
             self.start_X = self.albion.X
             self.start_Y = self.albion.Y
+            logger.info(f"Start position: ({self.start_X}, {self.start_Y})")
             self.albion.resetValue()
             
             # 重置 actions_frame 的值
             self.actions_frame.reset_values()
-            
-            # 獲取選擇的 ONNX 模型並載入類別列表
-            self.model = self.dropdown_box.get_option(1)
-            self.class_list = load_classes(self.model)
-            self.dropdown_box.update_option(2, self.class_list)
-            class_name = self.dropdown_box.get_option(2)
-            self.allow_ids = []
-            if class_name != 'ALL':
-                self.allow_ids = [self.class_list.index(class_name)]
-
-            # 建立模型並設置為網路模型
-            self.net = build_model(f"models/{self.model}")          
-            logger.info(f"Using: {self.model}")
-            
-            # 獲取遊戲名稱並初始化 WindowCapture 對象
-            logger.info(f'Game name: {self.dropdown_box.get_option(0)}')
-            window_name = self.dropdown_box.get_option(0)
-            self.wincap = WindowCapture(window_name)
-            
-            # 打印遊戲分辨率
+            window = self.other_frame.comboBox1.get()
+            self.wincap = WindowCapture(window)
+            logger.info(f'Game name: {window}')
             logger.info(f"Game resolution: {self.wincap.width}x{self.wincap.height}")
 
-
         #Creating Objects
-        # 監看視窗開關 開掛開關
-        switches_data = [
-            {"text": "Display bot's vision", "command": vision_switch_event},
-            {"text": "Gather resources", "command": bot_switch_event},
-            {"text": "Run script", "command": script_switch_event}
-        ]
-        self.actions_frame = SwitchesFrame(self, name="Actions", switches=switches_data)
-        # 選擇模式
-        dropdowns_data = [
-            {"text": "Select game name", "default": "Albion Online Client", "options": self.windows},
-            {"text": "Select detection model", "default": "albion.onnx", "options": self.models},
-            {"text": "Select class", "default": "ALL", "options": self.class_list}
-        ]
-        self.dropdown_box = DropdownFrame(self, name="Select", dropdowns=dropdowns_data)
+        self.actions_frame = SwitchesFrame(master=self)
+        self.model_frame = ModelFrame(master=self)
+        self.other_frame = OtherFrame(master=self)
         # 存檔按鈕
         self.update_info_button = ctk.CTkButton(self, text="Save changes", command=update_info)
-        # 信心值
-        self.confidence_slider = ctk.CTkSlider(self, from_=0, to=1, width=150, number_of_steps=100, command=confidence_slider_event)
-        self.confidence_slider.set(self.confidence)
         
         #Drawing Objects
-        self.actions_frame.grid(row=0, column=0, pady=12, padx=10)
-        self.dropdown_box.grid(row=0, column=1, pady=12, padx=10, sticky='n')
-        self.update_info_button.grid(row=1, column=0, padx=20, pady=10, sticky='n')
-        self.confidence_slider.grid(row=1, column=1, padx=20, pady=10, sticky='n')
-
+        self.actions_frame.grid(row=0, column=0, pady=12, padx=10, sticky='nsew',columnspan=2)
+        self.model_frame.grid(row=1, column=0, pady=12, padx=10, sticky='n')
+        self.other_frame.grid(row=1, column=1, pady=12, padx=10, sticky='n')
+        self.update_info_button.grid(row=2, column=0, padx=20, pady=10, sticky='n')
 
     def update_screenshot(self):
         '''timer'''
@@ -228,23 +152,13 @@ class App(ctk.CTk):
                 cv2.destroyAllWindows()
             if self.bot_status=="on":
                 self.bot.run()
-                #self.wincap.set_focus(self.wincap.hwnd)
-                #if self.albion.battling:
-                    #self.bot.fight()
-                #self.bot.go_to()
-                #if self.albion.KnockedDown > 1:
-                    #logger.info(f'KnockedDown {self.albion.KnockedDown}')
-                    #self.albion.KnockedDown = 0
-                    #self.wincap.close_window()
-            
-            
+
     def monitor(self, key):
         '''停止程序bot'''
         if key.name == 'f12':
             # 重置 actions_frame 的值
             self.vision_status = "off"
             self.bot_status = "off"
-            self.script_status = "off"
             self.albion.resetValue()
             self.after(0, self.actions_frame.reset_values)
             logger.info("F12 key pressed, bot_status off")

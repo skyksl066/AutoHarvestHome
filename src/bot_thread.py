@@ -44,38 +44,24 @@ def get_center(rectangles):
     return centers
 
 class Bot:
-    def __init__(self, window):
-        self.window = window
+    def __init__(self, master):
+        self.window = master
         self.moveTimes = 0
         self.times = 0
     
-    def run(self):
+    def default(self):
         wincap = self.window.wincap
         albion = self.window.albion
-        wincap.set_focus(wincap.hwnd)
-        if albion.battling:
-            self.fight()
-        if albion.KnockedDown > 1:
-            logger.info(f'KnockedDown {albion.KnockedDown}')
-            albion.KnockedDown = 0
-            wincap.close_window()
-        #slogger.info(f'moveTimes: {self.moveTimes}')
         if len(self.window.centers) > 0 and not albion.battling and self.moveTimes < 5:
-            # Find the closest object to the player
-            if len(self.window.centers) > 1:
-                closest_object = nearest_object(self.window.centers, self.window.confidences, wincap.screen_center)
-            else:
-                closest_object = self.window.centers[0]
+            closest_object = nearest_object(self.window.centers, self.window.confidences, wincap.screen_center)
             logger.info(f"Moving to: {closest_object[0]}, {closest_object[1]}")
             try:
-                # Action 1 (Move mouse)
                 pyautogui.moveTo(closest_object[0], closest_object[1], duration=0.2)
             except:
                 pass
             self.moveTimes += 1
             if is_pickaxe() and not albion.battling:
                 logger.info("click")
-                # Action 2 (Movement click)
                 pyautogui.click(button="left")
                 # 移動時間
                 sleep(4)
@@ -87,7 +73,6 @@ class Bot:
         else:
             current = (albion.X, albion.Y)
             target = (self.window.start_X, self.window.start_Y)
-            #logger.info(f'run else, moveTimes: {self.moveTimes}')
             if not is_near_target(current, target) or self.moveTimes > 4:
                 if current[0] == 0 and current[1] == 0:
                     logger.info('Please set start position first.')
@@ -97,6 +82,51 @@ class Bot:
                 moveTo(self, wincap.hwnd, area, current, target)
                 sleep(2)
                 self.moveTimes = 0
+    
+    def back_start_pos(self):
+        wincap = self.window.wincap
+        albion = self.window.albion
+        if len(self.window.centers) > 0 and not albion.battling:
+            closest_object = nearest_object(self.window.centers, self.window.confidences, wincap.screen_center)
+            logger.info(f"Moving to: {closest_object[0]}, {closest_object[1]}")
+            try:
+                pyautogui.moveTo(closest_object[0], closest_object[1], duration=0.2)
+            except:
+                pass
+            if is_pickaxe() and not albion.battling:
+                logger.info("click")
+                pyautogui.click(button="left")
+                # 移動時間
+                sleep(4)
+                self.in_pick()
+                if albion.speed < 5.5:
+                    # 移動前先騎馬
+                    pyautogui.press('a')
+                    sleep(5)
+                logger.info('Move to start position.')
+                current = (albion.X, albion.Y)
+                target = (self.window.start_X, self.window.start_Y)
+                area = (wincap.left, wincap.top, wincap.right, wincap.bottom)
+                moveTo(self, wincap.hwnd, area, current, target)
+                sleep(2)
+    
+    def run(self):
+        wincap = self.window.wincap
+        albion = self.window.albion
+        wincap.set_focus(wincap.hwnd)
+        if albion.battling:
+            self.fight()
+        if albion.KnockedDown > 1:
+            logger.info(f'KnockedDown {albion.KnockedDown}')
+            albion.KnockedDown = 0
+            wincap.close_window()
+        
+        if self.window.bot_mode == 'default':
+            self.default()
+        elif self.window.bot_mode == 'back start pos':
+            self.back_start_pos()
+        elif self.window.bot_mode == 'script':
+            logger.info('script.')
 
     def in_pick(self):
         times = 0
@@ -129,7 +159,6 @@ class Bot:
                 return
             pyautogui.press(key)
             pyautogui.sleep(1)
-            
 
 
 def is_pickaxe():
