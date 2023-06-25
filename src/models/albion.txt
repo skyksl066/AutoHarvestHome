@@ -1,0 +1,13 @@
+fiber-2
+fiber-3
+fiber-5
+fiber-4
+ore-3
+stone-3
+stone-1
+stone-4
+stone-2
+ore-4
+ore-5
+stone-5
+ore-2
