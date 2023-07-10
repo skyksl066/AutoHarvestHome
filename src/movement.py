@@ -97,7 +97,7 @@ def move(hwnd, area, script):
         pyautogui.click(center_x + click_x, center_y + click_y, button='right')
         time.sleep(1.5)
     
-def moveTo(self, hwnd, area, current, target):
+def moveTo(master, hwnd, area, current, target):
     area_middle = get_middle(area)
     center_x = (area_middle[0] + area_middle[2]) // 2
     center_y = (area_middle[1] + area_middle[3]) // 2 - 40
@@ -106,7 +106,7 @@ def moveTo(self, hwnd, area, current, target):
     click_x, click_y = calculate_click_position(current[0], current[1], target[0], target[1])
     move_list = adjust_coordinates(area, (center_x, center_y), (click_x, click_y))
     for x, y in move_list:
-        if self.window.albion.battling:
+        if master.albion.battling:
             break
         try:
             pyautogui.moveTo(x, y, duration=0.2)

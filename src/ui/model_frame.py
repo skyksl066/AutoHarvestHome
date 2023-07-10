@@ -22,8 +22,14 @@ class ModelFrame(ctk.CTkFrame):
 
         def comboBox2_callback(choice):
             master.allow_ids = []
-            if choice != 'ALL':
+            if choice in master.class_list:
                 master.allow_ids = [master.class_list.index(choice)]
+            else:
+                if choice == 'ALL':
+                    master.allow_ids = []
+                else:
+                    master.allow_ids = [i for i, item in enumerate(master.class_list) if item.startswith(choice)]
+            # print(master.allow_ids)
             logger.info(f"Set Class to: {choice}")
 
         def slider_event(value):
@@ -42,7 +48,8 @@ class ModelFrame(ctk.CTkFrame):
         self.label2 = ctk.CTkLabel(self, text='Class Select')
         self.label2.grid(row=2, column=0, columnspan=1, pady=0, padx=10, sticky="n")
         
-        options = master.class_list
+        options = master.class_list.copy()
+        options = options + group_list(master.class_list)
         options.insert(0, 'ALL')
         self.comboBox2 = ctk.CTkComboBox(self, values=options, command=comboBox2_callback)
         self.comboBox2.grid(row=3, column=0, pady=4, padx=15, sticky="nw")
@@ -54,3 +61,13 @@ class ModelFrame(ctk.CTkFrame):
         self.slider = ctk.CTkSlider(self, from_=0, to=1, width=150, number_of_steps=100, command=slider_event)
         self.slider.grid(row=5, column=0, pady=(0, 10), padx=10, sticky="n")
         self.slider.set(master.confidence)
+
+def group_list(org_list):
+    try:
+        grouped_list = []
+        for item in org_list:
+            group, name = item.split('-')
+            grouped_list.append(group)
+        return list(set(grouped_list))
+    except:
+        return []

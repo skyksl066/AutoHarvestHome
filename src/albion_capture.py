@@ -64,7 +64,6 @@ class AlbionCapture:
         self.battling = False
         self.causerId = None
         self.pickObjectId = None
-        self.MapIndex = None
         
     def _deserialize(self, jsonStr):
         result = json.loads(jsonStr)
@@ -94,7 +93,8 @@ class AlbionCapture:
             self.UserObjectId = value['UserObjectId']
             self.Username = value['Username']
             self.MapIndex = value['MapIndex']
-            logger.info(f'Join game Username: {self.Username}, Map: {value["UniqueName"]}')
+            #print(self.MapIndex)
+            logger.info(f'Join game Username: {self.Username}, Map: {value["UniqueName"]}, MapIndex: {value["MapIndex"]}')
             self.window.title(f"Google Chrome - {self.Username}")
     
     def _event(self, value):

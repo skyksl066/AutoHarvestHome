@@ -9,7 +9,7 @@ Move Albion Client to the corner of the screen
 """
 import customtkinter as ctk
 from onnx_detextion import filter_models, get_files_in_folder, build_model, load_classes, results_objects, results_frame
-from bot_thread import get_center, Bot
+from bot_thread import get_center, Bot, read_json_text,  write_json_text
 from window_capture import WindowCapture
 from albion_capture import AlbionCapture
 import cv2
@@ -82,27 +82,6 @@ class App(ctk.CTk):
 
         # 關閉視窗事件
         self.protocol("WM_DELETE_WINDOW", self.on_close)
-  
-        def script_switch_event():
-            switch = self.actions_frame.switches[2]
-            self.script_status = switch.get()
-            if self.script_status == 'on':
-                file_path = f'script/{self.albion.MapIndex}.txt'
-                try:
-                    self.script_record = read_json_text(file_path)
-                    logger.info(f"Switch run script to: {self.script_status}")
-                    if is_near_target((self.albion.X, self.albion.Y), self.script_record[0]):
-                        logger.info(f'{file_path} loaded')
-                    else:
-                        switch.deselect()
-                        self.script_status = 'off'
-                        logger.info(f'Please move to {self.script_record[0]}')
-                except FileNotFoundError:
-                    logger.error(f'File not found: {file_path}, Please create the script first or load map first.')
-                    switch.deselect()
-                    self.script_status = 'off'
-            else:
-                logger.info(f"Switch run script to: {self.script_status}")
          
         def update_info():
             # 將機器人狀態和視覺狀態設置為 "off"
@@ -151,7 +130,7 @@ class App(ctk.CTk):
                 # 關閉監看視窗
                 cv2.destroyAllWindows()
             if self.bot_status=="on":
-                self.bot.run()
+                self.bot.run(master=self)
 
     def monitor(self, key):
         '''停止程序bot'''
@@ -194,25 +173,6 @@ class App(ctk.CTk):
         self.albion.process.terminate()
         app.quit()
         os._exit(0)
-
-
-def read_json_text(path):
-    # 讀取 JSON 檔案
-    with open(path, 'r') as file:
-        data = json.load(file)
-    return data
-
-
-def write_json_text(path, data):
-    # 讀取 JSON 檔案
-    with open(path, 'w+') as file:
-        file.write(data)
-
-
-def is_near_target(current, target):
-    delta_x = target['x'] - current[0]
-    delta_y = target['y'] - current[1]
-    return abs(delta_x) < 10 and abs(delta_y) < 10
 
 
 if __name__ == "__main__":
