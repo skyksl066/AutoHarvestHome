@@ -22,3 +22,7 @@ To use the new version of AutoHarvestHome you can install the dependencies eithe
  5. Now you can run the **main.py** file through the conda environment using `python main.py`
 
 Feel free to use the code for your own projects!
+
+## Preview
+![Image](https://github.com/skyksl066/AutoHarvestHome/raw/main/docs/images/cmd.png?raw=true)
+![Image](https://github.com/skyksl066/AutoHarvestHome/raw/main/docs/images/main.png?raw=true)
