@@ -67,8 +67,7 @@ nc: 13  # 分類數量，根據資料集類別數量設定
 git clone https://github.com/ultralytics/yolov5
 cd yolov5
 pip install -r requirements.txt
-python train.py --img-size 640 --batch 16 --epochs 500 \
-  --data albion.yaml --weights yolov5s.pt
+python train.py --img-size 640 --batch 16 --epochs 500 --data albion.yaml --weights yolov5s.pt --workers 0
 
 # --img-size 可以指定影像的大小，對於偵測比較小的物件時，可以加大影像的大小，預設的影像大小為 640。
 # --weights 則可用來指定預訓練的模型。

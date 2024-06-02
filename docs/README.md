@@ -67,8 +67,7 @@ Train the model using YOLOv5 source code:
 git clone https://github.com/ultralytics/yolov5
 cd yolov5
 pip install -r requirements.txt
-python train.py --img-size 640 --batch 16 --epochs 500 \
-  --data albion.yaml --weights yolov5s.pt
+python train.py --img-size 640 --batch 16 --epochs 500 --data albion.yaml --weights yolov5s.pt --workers 0
 
 # --img-size specifies image size, larger for detecting smaller objects, default is 640.
 # --weights specifies pre-trained models.
